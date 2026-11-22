@@ -6,7 +6,7 @@ def make_pr(**kw):
         id="PR_1", repo="acme/api", number=1, title="T", url="https://github.com/acme/api/pull/1",
         author="ana", draft=False, created_at="2026-11-20T10:00:00Z", merged_at=None,
         head="feat/a", base="main", head_oid="aaa", ci="SUCCESS", review_decision=None,
-        conflicting=False, last_feedback_at=None,
+        conflicting=False, last_feedback_at=None, cross_repo=False,
     )
     base.update(kw)
     return PR(**base)

@@ -1,23 +1,34 @@
 """Pilhas de stacked PRs: quem é filho de quem e quem precisa de rebase."""
 
+import time
 from collections import defaultdict
 
+# Por quanto tempo guardar a memória de um PR que sumiu da busca (atraso do índice, limite de 50, PR fechado).
+MEMORY_TTL = 7 * 86400
 
-def analyze(mine, merged, memory):
+
+def analyze(mine, merged, memory, now=None):
     """Retorna (parent, rebase, nova_memoria).
 
     parent: id do PR -> id do pai aberto.
     rebase: id do PR -> número do pai mergeado, ou None quando o motivo é conflito.
-    memória: id do filho -> {"parent_id", "parent_number", "oid", "parent_merged"?}. Guarda quem era o pai
-    porque o GitHub costuma trocar a base do filho para main quando o pai é mergeado.
+    memória: id do filho -> {"parent_id", "parent_number", "oid", "parent_merged"?, "missing_since"?}. Guarda
+    quem era o pai porque o GitHub costuma trocar a base do filho para main quando o pai é mergeado; se a
+    branch do pai não for apagada, a base continua com o nome dela, mas sem PR aberto, e a memória também
+    resolve. Não se compara a base com as heads dos mergeados: branches longas (develop) e nomes reusados
+    dariam falsos avisos.
+    now: segundos (padrão time.time()), para expirar a memória de PRs ausentes da busca.
     """
-    open_by_head = {(p.repo, p.head): p for p in mine}
-    merged_by_head = {(p.repo, p.head): p for p in merged}
+    now = time.time() if now is None else now
+    # PRs de fork nunca são pai: a head deles está em outro repositório, mesmo com nome igual.
+    open_by_head = {(p.repo, p.head): p for p in mine if not p.cross_repo}
     merged_ids = {p.id for p in merged}
     parent, rebase, new_memory = {}, {}, {}
 
     for pr in mine:
         entry = memory.get(pr.id)
+        if entry:
+            entry = {k: v for k, v in entry.items() if k != "missing_since"}  # voltou à busca
         open_parent = open_by_head.get((pr.repo, pr.base))
         if open_parent and open_parent.id != pr.id:
             parent[pr.id] = open_parent.id
@@ -29,11 +40,17 @@ def analyze(mine, merged, memory):
             if entry["parent_merged"]:
                 rebase[pr.id] = entry["parent_number"]
 
-        merged_parent = merged_by_head.get((pr.repo, pr.base))
-        if merged_parent:  # a base ainda aponta para a branch do pai já mergeado
-            rebase[pr.id] = merged_parent.number
         if pr.id not in rebase and pr.conflicting:
             rebase[pr.id] = None
+
+    # PR ausente da busca: mantém a memória por MEMORY_TTL, contando desde a primeira ausência.
+    present = {p.id for p in mine}
+    for pr_id, entry in memory.items():
+        if pr_id in present:
+            continue
+        since = entry.get("missing_since", now)
+        if now - since <= MEMORY_TTL:
+            new_memory[pr_id] = {**entry, "missing_since": since}
 
     return parent, rebase, new_memory
 

@@ -1,5 +1,6 @@
 """Busca os PRs no GitHub (uma consulta GraphQL) e converte a resposta em objetos PR."""
 
+import http.client
 import json
 import shutil
 import ssl
@@ -29,6 +30,7 @@ fragment pr on PullRequest {
   id number title url isDraft createdAt mergedAt state
   headRefName baseRefName headRefOid mergeable reviewDecision
   author { login }
+  isCrossRepository
   repository { nameWithOwner }
   commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
   reviews(last: 20) { nodes { author { login } submittedAt } }
@@ -70,8 +72,14 @@ def fetch(token, now):
         raise GitHubError(f"HTTP {e.code}") from e
     except urllib.error.URLError as e:
         raise GitHubError(str(e.reason)) from e
-    if data.get("errors"):
-        raise GitHubError(data["errors"][0].get("message", "GraphQL error"))
+    except (OSError, http.client.HTTPException, ValueError) as e:
+        # Falha ao ler ou decodificar o corpo (timeout no meio da leitura, conexão cortada, JSON inválido).
+        # Vem depois de HTTPError/URLError, que também são OSError.
+        raise GitHubError(str(e) or type(e).__name__) from e
+    # Erros parciais (ex.: repositórios com SAML/SSO restrito) vêm junto com os dados: só falha sem dados.
+    if not data.get("data"):
+        errors = data.get("errors") or [{}]
+        raise GitHubError(errors[0].get("message", "GraphQL error"))
     return data["data"]
 
 
@@ -81,6 +89,7 @@ def _latest_feedback(node, viewer):
         for conn in (node["reviews"], node["comments"])
         for item in conn["nodes"]
         if item.get("author") and item["author"]["login"] != viewer
+        and not item["author"]["login"].endswith("[bot]")  # bots (CI, dependabot) não são revisão
     ]
     return max((t for t in times if t), default=None)
 
@@ -105,6 +114,7 @@ def _pr(node, viewer):
         review_decision=node.get("reviewDecision"),
         conflicting=node.get("mergeable") == "CONFLICTING",
         last_feedback_at=_latest_feedback(node, viewer),
+        cross_repo=node.get("isCrossRepository", False),
     )
 
 

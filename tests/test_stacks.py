@@ -41,10 +41,28 @@ def test_parent_not_yet_in_merged_search_keeps_memory():
 
 
 def test_base_still_pointing_to_merged_branch_needs_rebase():
+    # Branch do pai não foi apagada: a base do filho continua "feat/a", mas sem PR aberto nela.
+    memory = {"B": {"parent_id": "A", "parent_number": 1, "oid": "b1"}}
     merged_a = make_pr(id="A", number=1, head="feat/a")
-    b = make_pr(id="B", number=2, base="feat/a")
-    _, rebase, _ = analyze([b], [merged_a], {})
+    b = make_pr(id="B", number=2, base="feat/a", head_oid="b1")
+    _, rebase, _ = analyze([b], [merged_a], memory)
     assert rebase == {"B": 1}
+
+
+def test_gitflow_merged_release_does_not_flag_prs_on_develop():
+    # PR de release develop -> main mergeado não é pai dos PRs abertos contra develop.
+    release = make_pr(id="X", number=9, head="develop", base="main")
+    b = make_pr(id="B", number=2, head="feat/b", base="develop")
+    _, rebase, _ = analyze([b], [release], {})
+    assert rebase == {}
+
+
+def test_cross_repo_pr_is_never_a_parent():
+    fork = make_pr(id="F", number=5, head="main", base="main", cross_repo=True)
+    b = make_pr(id="B", number=2, head="feat/b", base="main")
+    parent, _, memory = analyze([fork, b], [], {})
+    assert parent == {}
+    assert memory == {}
 
 
 def test_conflict_needs_rebase_without_parent():
@@ -52,9 +70,29 @@ def test_conflict_needs_rebase_without_parent():
     assert rebase == {"C": None}
 
 
-def test_closed_prs_are_dropped_from_memory():
-    _, _, memory = analyze([], [], {"B": {"parent_id": "A", "parent_number": 1, "oid": "b1"}})
+DAY = 86400
+
+
+def test_missing_pr_memory_kept_within_ttl_and_dropped_after():
+    memory = {"B": {"parent_id": "A", "parent_number": 1, "oid": "b1"}}
+    # PR some da busca (atraso do índice ou limite de 50): a memória fica, marcada com a hora.
+    _, _, memory = analyze([], [], memory, now=1000)
+    assert memory["B"]["missing_since"] == 1000
+    # Polls seguintes não reiniciam a contagem.
+    _, _, memory = analyze([], [], memory, now=1000 + 6 * DAY)
+    assert memory["B"]["missing_since"] == 1000
+    # Passados 7 dias ausente, é descartada (PR fechado).
+    _, _, memory = analyze([], [], memory, now=1000 + 7 * DAY + 1)
     assert memory == {}
+
+
+def test_flag_restored_when_missing_pr_reappears():
+    memory = {"B": {"parent_id": "A", "parent_number": 1, "oid": "b1", "parent_merged": True}}
+    _, _, memory = analyze([], [], memory, now=1000)
+    b = make_pr(id="B", number=2, base="main", head_oid="b1")
+    _, rebase, memory = analyze([b], [], memory, now=2000)
+    assert rebase == {"B": 1}
+    assert "missing_since" not in memory["B"]
 
 
 def test_ordered_puts_children_under_parent():

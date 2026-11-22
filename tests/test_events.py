@@ -46,3 +46,10 @@ def test_parent_merged_once():
     assert events[0].parent == 7
     assert diff(cur, cur) == []
     assert diff(prev, st(mine=[pr], rebase={"B": None})) == []  # conflito não notifica
+
+
+def test_older_feedback_does_not_notify():
+    # Ex.: o comentário mais recente foi apagado e o anterior volta a ser o último.
+    prev = st(mine=[make_pr(id="M", last_feedback_at="2026-11-21T10:00:00Z")])
+    cur = st(mine=[make_pr(id="M", last_feedback_at="2026-11-20T10:00:00Z")])
+    assert diff(prev, cur) == []

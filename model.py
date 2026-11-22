@@ -28,6 +28,7 @@ class PR:
     review_decision: str | None  # APPROVED, CHANGES_REQUESTED, REVIEW_REQUIRED ou None
     conflicting: bool
     last_feedback_at: str | None  # review ou comentário mais recente de outra pessoa (ISO 8601)
+    cross_repo: bool  # PR vindo de um fork (a head está em outro repositório)
 
 
 @dataclass(frozen=True)

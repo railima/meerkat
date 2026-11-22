@@ -30,7 +30,8 @@ def diff(prev, cur):
                 events.append(Event("approved", pr))
             elif pr.review_decision != old.review_decision and pr.review_decision == "CHANGES_REQUESTED":
                 events.append(Event("changes_requested", pr))
-            elif pr.last_feedback_at and pr.last_feedback_at != old.last_feedback_at:
+            elif pr.last_feedback_at and (not old.last_feedback_at or pr.last_feedback_at > old.last_feedback_at):
+                # Só feedback mais novo: se o último comentário for apagado, o anterior não notifica de novo.
                 events.append(Event("commented", pr))
         parent = cur.rebase.get(pr.id)
         if parent is not None and prev.rebase.get(pr.id) != parent:
