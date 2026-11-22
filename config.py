@@ -27,8 +27,12 @@ def _read(name):
 
 
 def _write(name, data):
+    """Grava de forma atômica (temporário + os.replace); pode levantar OSError, quem chama trata."""
     config_dir().mkdir(parents=True, exist_ok=True)
-    (config_dir() / name).write_text(json.dumps(data), encoding="utf-8")
+    path = config_dir() / name
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(data), encoding="utf-8")
+    os.replace(tmp, path)
 
 
 def load_config():
@@ -39,8 +43,17 @@ def save_config(**values):
     _write("config.json", {**load_config(), **values})
 
 
+def _is_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
 def setting(key):
-    return load_config().get(key, DEFAULTS[key])
+    """Valor salvo, ou o padrão quando ausente ou de tipo errado (números int/float são equivalentes)."""
+    default = DEFAULTS[key]
+    value = load_config().get(key, default)
+    if _is_number(default):
+        return value if _is_number(value) else default
+    return value if isinstance(value, type(default)) else default
 
 
 def load_memory():
@@ -59,7 +72,10 @@ def load_token():
 
 
 def save_token(token):
-    """Salva o token no Chaveiro/Gerenciador de Credenciais; vazio remove (volta a usar o gh)."""
+    """Salva o token no Chaveiro/Gerenciador de Credenciais; vazio remove (volta a usar o gh).
+
+    Retorna True se deu certo e False se o cofre falhou. Remover um token inexistente conta como sucesso.
+    """
     try:
         if token:
             keyring.set_password(SERVICE, "github", token)
@@ -67,3 +83,6 @@ def save_token(token):
             keyring.delete_password(SERVICE, "github")
     except keyring.errors.PasswordDeleteError:
         pass
+    except keyring.errors.KeyringError:
+        return False
+    return True
