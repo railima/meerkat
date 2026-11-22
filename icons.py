@@ -2,24 +2,35 @@
 
 from PIL import Image, ImageDraw, ImageFont
 
-BRAND = (255, 122, 26, 255)
+FUR = (214, 160, 100, 255)
+MUZZLE = (240, 212, 168, 255)
+PATCH = (58, 40, 30, 255)
 BADGE = (229, 72, 77, 255)
 WARNING = (245, 180, 0, 255)
 
 
-def _glyph(draw, size, color):
-    """Um ponto com duas ondas: o sinal de alerta da sentinela."""
+def _glyph(draw, size):
+    """A carinha do suricato: orelhas e manchas escuras nos olhos (o que o reconhece mesmo pequeno)."""
     s = size / 64
-    draw.ellipse((10 * s, 26 * s, 24 * s, 40 * s), fill=color)
-    for r in (18, 30):
-        box = (17 * s - r * s, 33 * s - r * s, 17 * s + r * s, 33 * s + r * s)
-        draw.arc(box, start=-50, end=50, fill=color, width=round(6 * s))
+
+    def box(cx, cy, w, h):
+        return (s * (cx - w / 2), s * (cy - h / 2), s * (cx + w / 2), s * (cy + h / 2))
+
+    for dx in (-19, 19):  # orelhas
+        draw.ellipse(box(30 + dx, 14, 13, 15), fill=PATCH)
+    draw.ellipse(box(30, 30, 52, 50), fill=FUR)  # cabeça
+    draw.ellipse(box(30, 44, 28, 20), fill=MUZZLE)  # focinho
+    for dx in (-11, 11):
+        draw.ellipse(box(30 + dx, 28, 19, 17), fill=PATCH)  # mancha escura
+        draw.ellipse(box(30 + dx + 1, 28, 10, 10), fill="white")  # olho
+        draw.ellipse(box(30 + dx + 3, 28, 5, 5), fill=PATCH)  # pupila olhando de lado
+    draw.ellipse(box(30, 39, 10, 7), fill=PATCH)  # nariz
 
 
 def tray_icon(count, error, size=64):
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    _glyph(draw, size, BRAND)
+    _glyph(draw, size)
     if error:
         draw.ellipse((size * 0.55, size * 0.55, size, size), fill=WARNING)
         draw.text((size * 0.775, size * 0.76), "!", fill="black", anchor="mm",
