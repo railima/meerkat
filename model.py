@@ -46,6 +46,10 @@ class State:
 
 
 def status(pr, state):
+    """Retorna o status do PR; a ordem das checagens é a prioridade de exibição.
+
+    "rebase" vem de `State.rebase`, que stacks.analyze preenche tanto para pai mergeado quanto para conflito.
+    """
     if pr.id in state.rebase:
         return "rebase"
     if pr.ci in FAILING:
@@ -62,5 +66,6 @@ def status(pr, state):
 
 
 def attention_count(state):
+    """Conta revisões pedidas ao usuário mais os PRs dele que exigem ação (rebase, failing, changes)."""
     mine = sum(1 for pr in state.snapshot.mine if status(pr, state) in ATTENTION)
     return len(state.snapshot.review) + mine

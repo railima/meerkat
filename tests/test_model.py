@@ -26,9 +26,14 @@ def test_status_priority():
     assert status(make_pr(draft=True), s) == "draft"
     assert status(make_pr(review_decision="APPROVED"), s) == "approved"
     assert status(make_pr(), s) == "waiting"
+    assert status(make_pr(ci="EXPECTED"), s) == "running"
+    assert status(make_pr(ci=None), s) == "waiting"
+    assert status(make_pr(draft=True, review_decision="APPROVED"), s) == "draft"
+    assert status(make_pr(id="x"), state(rebase={"x": None})) == "rebase"
 
 
 def test_attention_count_includes_reviews_and_actionable_prs():
     mine = [make_pr(id="a", ci="FAILURE"), make_pr(id="b"), make_pr(id="c", review_decision="CHANGES_REQUESTED")]
     s = state(mine=mine, review=[make_pr(id="r1"), make_pr(id="r2")])
     assert attention_count(s) == 4
+    assert attention_count(state(mine=[make_pr(id="x")], rebase={"x": None})) == 1
