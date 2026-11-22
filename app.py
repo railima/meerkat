@@ -51,9 +51,11 @@ class Meerkat:
         self.state, self.error, self.updated_at = state, None, time.time()
         if not self.paused():
             lang = config.setting("ui_language")
+            sounds = config.setting("sounds")
             for event in events:
                 title, body = notification(event, lang)
-                notifier.notify(title, body, event.pr.url)
+                # Vários eventos na mesma busca: só o primeiro toca som, para não virar uma cacofonia.
+                notifier.notify(title, body, event.pr.url, sound=event.kind if sounds and event is events[0] else None)
 
     def loop(self):
         failures = 0

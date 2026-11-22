@@ -7,7 +7,9 @@ import uuid
 import webbrowser
 from pathlib import Path
 
-ICON = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent)) / "icon" / "icon.png"
+BASE = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+ICON = BASE / "icon" / "icon.png"
+SOUNDS = BASE / "sounds"  # um .wav por tipo de evento (gerados por sounds/make_sounds.py)
 _center = None  # UNUserNotificationCenter, configurado em setup()
 
 
@@ -47,24 +49,41 @@ def setup():
         _center = None
 
 
-def notify(title, body, url=None):
+def play(sound):
+    """Toca sounds/<sound>.wav sem bloquear. Sem arquivo, não faz nada."""
+    path = SOUNDS / f"{sound}.wav"
+    if not path.exists():
+        return
     if sys.platform == "win32":
-        from winotify import Notification
+        import winsound
+
+        winsound.PlaySound(str(path), winsound.SND_FILENAME | winsound.SND_ASYNC)
+    elif sys.platform == "darwin":
+        subprocess.Popen(["afplay", str(path)])
+
+
+def notify(title, body, url=None, sound=None):
+    """Mostra a notificação. Com `sound`, toca o som próprio do evento no lugar do som do sistema;
+    sem `sound` (sons desligados), a notificação é silenciosa."""
+    if sys.platform == "win32":
+        from winotify import Notification, audio
 
         toast = Notification(app_id="Meerkat", title=title, msg=body, launch=url or "",
                              icon=str(ICON) if ICON.exists() else "")
+        toast.set_audio(audio.Silent, loop=False)
         toast.show()
     elif sys.platform == "darwin":
         if _center is not None:
-            from UserNotifications import UNMutableNotificationContent, UNNotificationRequest, UNNotificationSound
+            from UserNotifications import UNMutableNotificationContent, UNNotificationRequest
 
             content = UNMutableNotificationContent.alloc().init()
             content.setTitle_(title)
             content.setBody_(body)
-            content.setSound_(UNNotificationSound.defaultSound())
             content.setUserInfo_({"url": url or ""})
             request = UNNotificationRequest.requestWithIdentifier_content_trigger_(str(uuid.uuid4()), content, None)
             _center.addNotificationRequest_withCompletionHandler_(request, None)
         else:
             script = "display notification item 2 of argv with title item 1 of argv"
             subprocess.run(["osascript", "-e", f"on run argv\n{script}\nend run", title, body], check=False)
+    if sound:
+        play(sound)

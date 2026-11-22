@@ -32,6 +32,7 @@ STRINGS = {
         "token_prompt": "Paste a GitHub personal access token (repo scope, read-only).\n"
                         "Leave it empty to use your GitHub CLI login (gh).",
         "start_at_login": "Start at login",
+        "sounds": "Notification sounds",
         "quit": "Quit",
         "error_auth": "⚠️ GitHub login missing or invalid. Set a token in Settings.",
         "error_network": "⚠️ Can't reach GitHub ({detail})",
@@ -75,6 +76,7 @@ STRINGS = {
         "token_prompt": "Cole um token pessoal do GitHub (escopo repo, somente leitura).\n"
                         "Deixe vazio para usar o login do GitHub CLI (gh).",
         "start_at_login": "Iniciar com o sistema",
+        "sounds": "Sons das notificações",
         "quit": "Sair",
         "error_auth": "⚠️ Login do GitHub ausente ou inválido. Configure um token.",
         "error_network": "⚠️ Sem conexão com o GitHub ({detail})",

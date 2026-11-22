@@ -8,7 +8,7 @@ from pathlib import Path
 import keyring
 
 SERVICE = "Meerkat"
-DEFAULTS = {"interval": 2, "ui_language": "en", "paused_until": 0, "muted_repos": []}
+DEFAULTS = {"interval": 2, "ui_language": "en", "paused_until": 0, "muted_repos": [], "sounds": True}
 
 
 def config_dir():

@@ -94,6 +94,8 @@ class Tray:
             MenuItem(t("interval", lang), interval),
             MenuItem(t("language", lang), language),
             MenuItem(t("token", lang), lambda: self.app.ask_token()),
+            MenuItem(t("sounds", lang), lambda: self._set(sounds=not config.setting("sounds")),
+                     checked=lambda _m: config.setting("sounds")),
             MenuItem(t("start_at_login", lang), lambda: self._toggle_autostart(),
                      checked=lambda _m: autostart.is_enabled()),
         )

@@ -6,7 +6,7 @@ VERSION = os.environ.get("MEERKAT_VERSION", "0.0.0-dev").lstrip("v")
 
 a = Analysis(
     ["app.py"],
-    datas=[("icon/icon.png", "icon")],
+    datas=[("icon/icon.png", "icon"), ("sounds/*.wav", "sounds")],
     hiddenimports=["keyring.backends.macOS", "keyring.backends.Windows", "pystray._darwin", "pystray._win32"],
 )
 pyz = PYZ(a.pure)
