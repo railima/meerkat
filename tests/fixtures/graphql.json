@@ -1,0 +1,34 @@
+{
+  "viewer": {"login": "me"},
+  "review": {"nodes": [
+    {"id": "R1", "number": 123, "title": "Ajusta frete", "url": "https://github.com/acme/api/pull/123",
+     "isDraft": false, "createdAt": "2026-11-20T09:00:00Z", "mergedAt": null, "state": "OPEN",
+     "headRefName": "fix/frete", "baseRefName": "main", "headRefOid": "r1", "mergeable": "MERGEABLE",
+     "reviewDecision": "REVIEW_REQUIRED", "author": {"login": "ana"}, "repository": {"nameWithOwner": "acme/api"},
+     "commits": {"nodes": [{"commit": {"statusCheckRollup": {"state": "SUCCESS"}}}]},
+     "reviews": {"nodes": []}, "comments": {"nodes": []}},
+    {}
+  ]},
+  "mine": {"nodes": [
+    {"id": "M1", "number": 45, "title": "Refatora pagamentos", "url": "https://github.com/acme/api/pull/45",
+     "isDraft": false, "createdAt": "2026-11-18T09:00:00Z", "mergedAt": null, "state": "OPEN",
+     "headRefName": "feat/pagamentos", "baseRefName": "main", "headRefOid": "m1", "mergeable": "CONFLICTING",
+     "reviewDecision": null, "author": {"login": "me"}, "repository": {"nameWithOwner": "acme/api"},
+     "commits": {"nodes": [{"commit": {"statusCheckRollup": null}}]},
+     "reviews": {"nodes": [
+       {"author": {"login": "me"}, "submittedAt": "2026-11-20T12:00:00Z"},
+       {"author": {"login": "joao"}, "submittedAt": "2026-11-19T12:00:00Z"}
+     ]},
+     "comments": {"nodes": [
+       {"author": {"login": "ana"}, "createdAt": "2026-11-19T15:00:00Z"},
+       {"author": null, "createdAt": "2026-11-21T15:00:00Z"}
+     ]}}
+  ]},
+  "merged": {"nodes": [
+    {"id": "X1", "number": 44, "title": "Base de pagamentos", "url": "https://github.com/acme/api/pull/44",
+     "isDraft": false, "createdAt": "2026-11-10T09:00:00Z", "mergedAt": "2026-11-20T18:00:00Z", "state": "MERGED",
+     "headRefName": "feat/base", "baseRefName": "main", "headRefOid": "x1", "mergeable": "UNKNOWN",
+     "reviewDecision": "APPROVED", "author": {"login": "me"}, "repository": {"nameWithOwner": "acme/api"},
+     "commits": {"nodes": []}, "reviews": {"nodes": []}, "comments": {"nodes": []}}
+  ]}
+}
