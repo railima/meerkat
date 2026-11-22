@@ -77,9 +77,13 @@ def fetch(token, now):
         # Vem depois de HTTPError/URLError, que também são OSError.
         raise GitHubError(str(e) or type(e).__name__) from e
     # Erros parciais (ex.: repositórios com SAML/SSO restrito) vêm junto com os dados: só falha sem dados.
+    errors = data.get("errors") or [{}]
     if not data.get("data"):
-        errors = data.get("errors") or [{}]
         raise GitHubError(errors[0].get("message", "GraphQL error"))
+    # Campo nulo (ex.: uma das buscas deu timeout): falha em vez de tratar como lista vazia, o que
+    # notificaria de novo todos os PRs na busca seguinte.
+    if any(data["data"].get(key) is None for key in ("viewer", "review", "mine", "merged")):
+        raise GitHubError(errors[0].get("message", "incomplete response"))
     return data["data"]
 
 

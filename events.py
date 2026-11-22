@@ -34,6 +34,7 @@ def diff(prev, cur):
                 # Só feedback mais novo: se o último comentário for apagado, o anterior não notifica de novo.
                 events.append(Event("commented", pr))
         parent = cur.rebase.get(pr.id)
-        if parent is not None and prev.rebase.get(pr.id) != parent:
+        # Exige o PR no estado anterior: se ele sumiu da busca e voltou, o aviso já foi dado.
+        if old and parent is not None and prev.rebase.get(pr.id) != parent:
             events.append(Event("parent_merged", pr, parent))
     return events

@@ -53,3 +53,9 @@ def test_older_feedback_does_not_notify():
     prev = st(mine=[make_pr(id="M", last_feedback_at="2026-11-21T10:00:00Z")])
     cur = st(mine=[make_pr(id="M", last_feedback_at="2026-11-20T10:00:00Z")])
     assert diff(prev, cur) == []
+
+
+def test_parent_merged_not_repeated_when_pr_reappears():
+    # PR sumiu da busca por um poll e voltou: o aviso de pai mergeado já foi dado antes.
+    pr = make_pr(id="B")
+    assert diff(st(), st(mine=[pr], rebase={"B": 7})) == []

@@ -115,3 +115,11 @@ def test_fetch_errors_without_data_is_github_error(monkeypatch):
     fake_urlopen(monkeypatch, body({"data": None, "errors": [{"message": "Bad query"}]}))
     with pytest.raises(GitHubError, match="Bad query"):
         fetch("t", NOW)
+
+
+def test_fetch_null_top_level_field_is_github_error(monkeypatch):
+    # Uma das buscas falhou (timeout): tratar como lista vazia geraria notificações repetidas depois.
+    data = {"viewer": {"login": "me"}, "review": {"nodes": []}, "mine": None, "merged": {"nodes": []}}
+    fake_urlopen(monkeypatch, body({"data": data, "errors": [{"message": "timeout"}]}))
+    with pytest.raises(GitHubError, match="timeout"):
+        fetch("t", NOW)
