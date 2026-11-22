@@ -26,6 +26,8 @@ STRINGS = {
         "interval": "Refresh every",
         "minutes": "{n} min",
         "language": "Language",
+        "repos": "Watched repositories",
+        "repos_empty": "(none yet)",
         "token": "GitHub token…",
         "token_prompt": "Paste a GitHub personal access token (repo scope, read-only).\n"
                         "Leave it empty to use your GitHub CLI login (gh).",
@@ -67,6 +69,8 @@ STRINGS = {
         "interval": "Atualizar a cada",
         "minutes": "{n} min",
         "language": "Idioma",
+        "repos": "Repositórios vigiados",
+        "repos_empty": "(nenhum ainda)",
         "token": "Token do GitHub…",
         "token_prompt": "Cole um token pessoal do GitHub (escopo repo, somente leitura).\n"
                         "Deixe vazio para usar o login do GitHub CLI (gh).",

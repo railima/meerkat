@@ -70,3 +70,14 @@ def attention_count(state):
     """Conta revisões pedidas ao usuário mais os PRs dele que exigem ação (rebase, failing, changes)."""
     mine = sum(1 for pr in state.snapshot.mine if status(pr, state) in ATTENTION)
     return len(state.snapshot.review) + mine
+
+
+def without_repos(snapshot, muted):
+    """Remove os PRs dos repositórios que o usuário escolheu não vigiar."""
+    if not muted:
+        return snapshot
+
+    def keep(prs):
+        return tuple(pr for pr in prs if pr.repo not in muted)
+
+    return Snapshot(snapshot.viewer, keep(snapshot.review), keep(snapshot.mine), keep(snapshot.merged))

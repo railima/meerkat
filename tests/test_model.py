@@ -37,3 +37,16 @@ def test_attention_count_includes_reviews_and_actionable_prs():
     s = state(mine=mine, review=[make_pr(id="r1"), make_pr(id="r2")])
     assert attention_count(s) == 4
     assert attention_count(state(mine=[make_pr(id="x")], rebase={"x": None})) == 1
+
+
+def test_without_repos_drops_muted_repositories():
+    from model import without_repos
+
+    snap = Snapshot("me", (make_pr(id="r", repo="a/x"),), (make_pr(id="m1", repo="a/x"), make_pr(id="m2", repo="b/y")),
+                    (make_pr(id="g", repo="b/y"),))
+    filtered = without_repos(snap, {"b/y"})
+    assert [p.id for p in filtered.review] == ["r"]
+    assert [p.id for p in filtered.mine] == ["m1"]
+    assert filtered.merged == ()
+    assert filtered.viewer == "me"
+    assert without_repos(snap, set()) == snap

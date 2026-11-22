@@ -12,7 +12,7 @@ import notifier
 from events import diff
 from github_api import AuthError, GitHubError, fetch, gh_cli_token, parse
 from i18n import notification, t
-from model import State
+from model import State, without_repos
 from stacks import analyze
 from tray import Tray, on_main_thread
 
@@ -22,6 +22,8 @@ class Meerkat:
         self.state = None
         self.error = None  # ("auth", None) ou ("network", detalhe)
         self.updated_at = None
+        self.repos = []  # todos os repositórios vistos na última busca (vigiados ou não)
+        self.rebaseline = False  # após mudar os vigiados, a próxima busca não notifica
         self.memory = config.load_memory()
         self.wake = threading.Event()
         self.running = True
@@ -37,11 +39,15 @@ class Meerkat:
         token = config.load_token() or gh_cli_token()
         if not token:
             raise AuthError("no token")
-        snapshot = parse(fetch(token, datetime.now(timezone.utc)))
+        raw = parse(fetch(token, datetime.now(timezone.utc)))
+        self.repos = sorted({pr.repo for pr in raw.review + raw.mine})
+        snapshot = without_repos(raw, set(config.setting("muted_repos")))
         parent, rebase, self.memory = analyze(snapshot.mine, snapshot.merged, self.memory)
         config.save_memory(self.memory)
         state = State(snapshot, parent, rebase)
-        events = diff(self.state, state)
+        # Ao voltar a vigiar um repositório, os PRs dele pareceriam novos: não notifica nessa busca.
+        events = [] if self.rebaseline else diff(self.state, state)
+        self.rebaseline = False
         self.state, self.error, self.updated_at = state, None, time.time()
         if not self.paused():
             lang = config.setting("ui_language")
@@ -71,6 +77,13 @@ class Meerkat:
                     break
                 self.tray.update()
             self.wake.clear()
+
+    def toggle_repo(self, repo):
+        muted = set(config.setting("muted_repos"))
+        muted ^= {repo}
+        config.save_config(muted_repos=sorted(muted))
+        self.rebaseline = True
+        self.refresh_now()
 
     def ask_token(self):
         """Caixa de diálogo nativa para colar o token; vazio volta a usar o login do gh."""

@@ -82,7 +82,15 @@ class Tray:
                      checked=partial(lambda code, _m: config.setting("ui_language") == code, code), radio=True)
             for code, name in LANGUAGES.items()
         ))
+        muted = set(config.setting("muted_repos"))
+        repo_items = [
+            MenuItem(repo, partial(lambda repo, _i, _m: self.app.toggle_repo(repo), repo),
+                     checked=partial(lambda repo, _m: repo not in set(config.setting("muted_repos")), repo))
+            for repo in sorted(set(self.app.repos) | muted)
+        ] or [MenuItem(t("repos_empty", lang), None, enabled=False)]
+        repos = Menu(*repo_items)
         return (
+            MenuItem(t("repos", lang), repos),
             MenuItem(t("interval", lang), interval),
             MenuItem(t("language", lang), language),
             MenuItem(t("token", lang), lambda: self.app.ask_token()),
