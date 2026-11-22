@@ -1,4 +1,4 @@
-# Bip — design
+# Meerkat — design
 
 Painel de PRs do GitHub na barra de menu (macOS) e na bandeja do sistema (Windows).
 
@@ -8,7 +8,7 @@ Mostrar, sem abrir o navegador, o que precisa da atenção do usuário nos PRs d
 do sistema quando algo muda: revisões pedidas, CI falhando, revisões recebidas e pilhas de stacked PRs que
 precisam de rebase.
 
-Fora do escopo: Azure DevOps, ações que alteram código ou o remoto (o Bip só avisa; nunca faz rebase ou push).
+Fora do escopo: Azure DevOps, ações que alteram código ou o remoto (o Meerkat só avisa; nunca faz rebase ou push).
 
 ## Interface
 
@@ -63,7 +63,7 @@ buscas:
 3. `is:pr author:@me is:merged merged:>=<últimos 7 dias>` — para detectar pais de pilha mergeados.
 
 **Pilhas.** Entre os PRs abertos do usuário no mesmo repositório, se `base` de B = `head` de A, B é filho de A.
-Como o GitHub costuma retargetar o filho para `main` quando o pai é mergeado e a branch apagada, o Bip guarda em
+Como o GitHub costuma retargetar o filho para `main` quando o pai é mergeado e a branch apagada, o Meerkat guarda em
 um arquivo local (`state.json`) a relação filho → pai e o `headRefOid` do filho. Quando o pai aparece como
 mergeado, o filho fica 🔁 até seu `headRefOid` mudar (novo push). Conflito com a base (`mergeable = CONFLICTING`)
 também marca 🔁.
@@ -99,6 +99,6 @@ notifica na transição). O CI roda os testes antes de empacotar.
 
 ## Distribuição
 
-Repositório público novo (`railima/bip`, MIT), mesmo esquema do Psiu: PyInstaller, workflow que gera `.dmg` e
+Repositório público novo (`railima/meerkat`, MIT), mesmo esquema do Psiu: PyInstaller, workflow que gera `.dmg` e
 `.exe` a cada tag `v*` e publica uma Release. Mesmo cuidado com segredos: `.gitignore` reforçado e varredura
 antes do primeiro push.
