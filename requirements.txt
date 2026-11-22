@@ -1,0 +1,6 @@
+pystray
+Pillow
+keyring
+certifi
+winotify; sys_platform == "win32"
+pyobjc-framework-UserNotifications; sys_platform == "darwin"
