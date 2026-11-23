@@ -7,5 +7,5 @@ uv pip install --python .venv/bin/python -r requirements.txt -r requirements-dev
 .venv/bin/pytest -q
 .venv/bin/pyinstaller --noconfirm --clean meerkat.spec
 rm -f dist/Meerkat.dmg
-hdiutil create -volname Meerkat -srcfolder dist/Meerkat.app -ov -format UDZO dist/Meerkat.dmg >/dev/null
+.venv/bin/dmgbuild -s dmg_settings.py Meerkat dist/Meerkat.dmg >/dev/null
 echo "Pronto: $(pwd)/dist/Meerkat.app e dist/Meerkat.dmg"

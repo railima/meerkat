@@ -1,5 +1,6 @@
 import io
 import json
+import ssl
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -7,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from github_api import AuthError, GitHubError, fetch, parse, search_queries
+from github_api import AuthError, GitHubError, OfflineError, fetch, parse, search_queries
 
 DATA = json.loads((Path(__file__).parent / "fixtures" / "graphql.json").read_text())
 
@@ -87,22 +88,30 @@ def test_fetch_http_500_is_github_error(monkeypatch):
     assert not isinstance(e.value, AuthError)
 
 
-def test_fetch_url_error_is_github_error(monkeypatch):
+def test_fetch_url_error_is_offline(monkeypatch):
     fake_urlopen(monkeypatch, urllib.error.URLError("offline"))
-    with pytest.raises(GitHubError):
+    with pytest.raises(OfflineError):
         fetch("t", NOW)
 
 
-def test_fetch_read_timeout_is_github_error(monkeypatch):
+def test_fetch_read_timeout_is_offline(monkeypatch):
     fake_urlopen(monkeypatch, TimeoutResponse(b""))
-    with pytest.raises(GitHubError):
+    with pytest.raises(OfflineError):
         fetch("t", NOW)
 
 
-def test_fetch_invalid_json_is_github_error(monkeypatch):
+def test_fetch_ssl_eof_is_offline(monkeypatch):
+    # O erro que aparecia sem internet: "[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred..."
+    fake_urlopen(monkeypatch, urllib.error.URLError(ssl.SSLEOFError(8, "EOF occurred in violation of protocol")))
+    with pytest.raises(OfflineError):
+        fetch("t", NOW)
+
+
+def test_fetch_invalid_json_is_github_error_not_offline(monkeypatch):
     fake_urlopen(monkeypatch, FakeResponse(b"<html>"))
-    with pytest.raises(GitHubError):
+    with pytest.raises(GitHubError) as e:
         fetch("t", NOW)
+    assert not isinstance(e.value, OfflineError)
 
 
 def test_fetch_partial_errors_keep_data(monkeypatch):

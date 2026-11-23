@@ -1,2 +1,3 @@
 pytest
 pyinstaller
+dmgbuild; sys_platform == "darwin"

@@ -1,6 +1,7 @@
 """Ícone na barra de menu/bandeja e o menu (pystray)."""
 
 import sys
+import threading
 import time
 import webbrowser
 from datetime import datetime, timezone
@@ -46,7 +47,8 @@ class Tray:
         lang, app = config.setting("ui_language"), self.app
         if app.error:
             kind, detail = app.error
-            text = t("error_auth", lang) if kind == "auth" else t("error_network", lang, detail=detail)
+            text = {"auth": t("error_auth", lang), "offline": t("error_offline", lang)}.get(kind) \
+                or t("error_network", lang, detail=detail)
             yield MenuItem(text, None, enabled=False)
             yield Menu.SEPARATOR
         if app.state:
@@ -93,7 +95,7 @@ class Tray:
             MenuItem(t("repos", lang), repos),
             MenuItem(t("interval", lang), interval),
             MenuItem(t("language", lang), language),
-            MenuItem(t("token", lang), lambda: self.app.ask_token()),
+            MenuItem(t("token", lang), lambda: threading.Thread(target=self.app.ask_token, daemon=True).start()),
             MenuItem(t("sounds", lang), lambda: self._set(sounds=not config.setting("sounds")),
                      checked=lambda _m: config.setting("sounds")),
             MenuItem(t("start_at_login", lang), lambda: self._toggle_autostart(),

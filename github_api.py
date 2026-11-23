@@ -47,6 +47,10 @@ class AuthError(GitHubError):
     pass
 
 
+class OfflineError(GitHubError):
+    """Sem conexão com o GitHub (rede caiu, Wi-Fi desligado, timeout, conexão cortada)."""
+
+
 def search_queries(now):
     since = (now - timedelta(days=7)).date().isoformat()
     return {
@@ -70,11 +74,11 @@ def fetch(token, now):
         if e.code == 401:
             raise AuthError("401") from e
         raise GitHubError(f"HTTP {e.code}") from e
-    except urllib.error.URLError as e:
-        raise GitHubError(str(e.reason)) from e
-    except (OSError, http.client.HTTPException, ValueError) as e:
-        # Falha ao ler ou decodificar o corpo (timeout no meio da leitura, conexão cortada, JSON inválido).
-        # Vem depois de HTTPError/URLError, que também são OSError.
+    except (OSError, http.client.HTTPException) as e:
+        # Rede: DNS, recusa, timeout, SSL interrompido, conexão cortada no meio da leitura.
+        # Vem depois de HTTPError, que também é OSError.
+        raise OfflineError(str(getattr(e, "reason", e)) or type(e).__name__) from e
+    except ValueError as e:  # corpo que não é JSON
         raise GitHubError(str(e) or type(e).__name__) from e
     # Erros parciais (ex.: repositórios com SAML/SSO restrito) vêm junto com os dados: só falha sem dados.
     errors = data.get("errors") or [{}]
